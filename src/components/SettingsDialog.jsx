@@ -93,10 +93,21 @@ export function SettingsDialog({
   }
 
   const handleScanNfc = async () => {
+    console.log('SettingsDialog: handleScanNfc called, scanBusy:', scanBusy, 'isScanning:', isScanning)
+    if (scanBusy || isScanning) {
+      console.log('SettingsDialog: scan already in progress')
+      return
+    }
     setIsScanning(true)
-    const serial = await onScanNfc()
-    if (serial) setScannedSerial(serial)
-    setIsScanning(false)
+    try {
+      const serial = await onScanNfc()
+      console.log('SettingsDialog: NFC serial received:', serial)
+      if (serial) setScannedSerial(serial)
+    } catch (err) {
+      console.error('SettingsDialog: NFC scan error:', err)
+    } finally {
+      setIsScanning(false)
+    }
   }
 
   return (

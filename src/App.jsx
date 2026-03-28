@@ -393,10 +393,13 @@ export default function App() {
         transactions={state.transactions}
         nfcSupported={nfcSupported}
         onScanNfc={async () => {
+          console.log('Settings: NFC scan requested')
           try {
             const result = await readTagOnce()
+            console.log('Settings: NFC scan result', result)
             return result?.serial || null
-          } catch {
+          } catch (err) {
+            console.error('Settings: NFC scan error', err)
             return null
           }
         }}
