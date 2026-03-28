@@ -64,7 +64,6 @@ export function KeypadDialog({
                 <p className="text-3xl font-semibold tabular-nums tracking-tight text-white sm:text-4xl">
                   {formatMoney(amount)}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">{t.keypadAmountHint}</p>
               </div>
             </div>
 

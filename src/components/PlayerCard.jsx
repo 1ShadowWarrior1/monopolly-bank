@@ -2,6 +2,12 @@ import { motion } from 'framer-motion'
 import { formatMoney } from '../utils/money'
 import { t } from '../i18n/ru'
 
+function getBalanceColor(balance) {
+  if (balance > 750) return 'text-emerald-400'
+  if (balance < 300) return 'text-rose-400'
+  return 'text-amber-400'
+}
+
 export function PlayerCard({
   player,
   isSource,
@@ -9,6 +15,8 @@ export function PlayerCard({
   hoverInvalidHere,
   onPlayerPointerDown,
 }) {
+  const balanceColor = getBalanceColor(player.balance)
+  
   return (
     <motion.article
       data-player-id={player.id}
@@ -34,10 +42,9 @@ export function PlayerCard({
         <p className="truncate text-center text-[11px] font-semibold uppercase tracking-wide text-amber-200/90">
           {player.name}
         </p>
-        <p className="mt-1 text-center text-sm font-semibold tabular-nums text-white sm:text-base">
+        <p className={`mt-1 text-center text-sm font-semibold tabular-nums sm:text-base ${balanceColor}`}>
           {formatMoney(player.balance)}
         </p>
-        <p className="mt-1 text-center text-[10px] text-slate-500">{t.dragPlayerHint}</p>
         {player.nfcSerial ? (
           <p className="mt-1.5 text-center text-[9px] font-medium uppercase tracking-wide text-emerald-400/90">
             {t.nfcLinkedBadge}

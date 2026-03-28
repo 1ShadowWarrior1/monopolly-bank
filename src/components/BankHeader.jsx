@@ -15,14 +15,6 @@ export function BankHeader({
       } ${isDraggingBank ? 'bg-slate-900/95' : 'bg-slate-950/90'} backdrop-blur-md`}
     >
       <div className="mx-auto flex max-w-lg flex-col gap-3">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400/90">{t.appBadge}</p>
-          <p className="text-lg font-semibold text-white">{t.bankCapital}</p>
-        </div>
-        <p className="text-sm text-emerald-300/90">
-          {t.infiniteLiquidity}
-        </p>
-
         <div
           onPointerDown={onBankPointerDown}
           role="button"
@@ -35,7 +27,6 @@ export function BankHeader({
           style={{ touchAction: 'none' }}
         >
           <span className="text-base font-semibold text-amber-100 sm:text-lg">{t.dragFromBank}</span>
-          <span className="max-w-[20rem] text-xs leading-snug text-slate-400 sm:text-sm">{t.dragFromBankHint}</span>
         </div>
       </div>
     </header>

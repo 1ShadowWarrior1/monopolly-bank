@@ -1,6 +1,6 @@
 /** Тексты интерфейса (RU) */
 export const t = {
-  appBadge: 'Монополия — банк',
+  appBadge: 'Монополия — банк by 1ShadowWarrior1',
   bankCapital: 'Капитал банка',
   infiniteLiquidity: 'Безлимитная ликвидность',
   dragFromBank: 'Тяните отсюда',

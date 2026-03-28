@@ -2,7 +2,7 @@
 export function formatMoney(amount) {
   const neg = amount < 0
   const v = Math.abs(Math.trunc(amount))
-  const s = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(v)
+  const s = v.toString()
   return neg ? `−$${s}` : `$${s}`
 }
 
