@@ -8,9 +8,6 @@ export function PlayerCard({
   hoverValidHere,
   hoverInvalidHere,
   onPlayerPointerDown,
-  onBindNfc,
-  nfcBusy,
-  nfcSupported,
 }) {
   return (
     <motion.article
@@ -41,25 +38,12 @@ export function PlayerCard({
           {formatMoney(player.balance)}
         </p>
         <p className="mt-1 text-center text-[10px] text-slate-500">{t.dragPlayerHint}</p>
+        {player.nfcSerial ? (
+          <p className="mt-1.5 text-center text-[9px] font-medium uppercase tracking-wide text-emerald-400/90">
+            {t.nfcLinkedBadge}
+          </p>
+        ) : null}
       </div>
-
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.97 }}
-        disabled={!nfcSupported || nfcBusy}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation()
-          onBindNfc(player.id)
-        }}
-        className={`mt-2 rounded-lg py-1.5 text-[10px] font-medium ring-1 touch-manipulation ${
-          nfcSupported
-            ? 'bg-slate-800 text-emerald-200 ring-emerald-600/40'
-            : 'cursor-not-allowed bg-slate-800/50 text-slate-600 ring-slate-800'
-        }`}
-      >
-        {player.nfcSerial ? t.rebindNfc : t.bindNfc}
-      </motion.button>
     </motion.article>
   )
 }

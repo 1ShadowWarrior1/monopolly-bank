@@ -20,7 +20,7 @@ export function BankHeader({
           : 'border-slate-800 ring-0'
       } ${isDraggingBank ? 'bg-slate-900/95' : 'bg-slate-950/90'} backdrop-blur-md`}
     >
-      <div className="mx-auto flex max-w-lg flex-col gap-2">
+      <div className="mx-auto flex max-w-lg flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400/90">{t.appBadge}</p>
@@ -43,17 +43,17 @@ export function BankHeader({
           onPointerDown={onBankPointerDown}
           role="button"
           tabIndex={0}
-          className={`touch-none cursor-grab select-none rounded-2xl px-3 py-3 text-center text-xs text-slate-300 ring-1 active:cursor-grabbing ${
+          className={`flex min-h-[5.75rem] touch-none cursor-grab select-none flex-col items-center justify-center gap-1 rounded-2xl px-4 py-5 text-center ring-1 active:cursor-grabbing sm:min-h-[6.5rem] sm:py-6 ${
             isDraggingBank
               ? 'scale-[1.02] bg-slate-800/90 ring-amber-500/50'
-              : 'bg-slate-900/60 ring-slate-800'
+              : 'bg-gradient-to-b from-slate-800/80 to-slate-900/90 ring-amber-500/20'
           }`}
           style={{ touchAction: 'none' }}
           animate={{ scale: isDraggingBank ? 1.02 : 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 28 }}
         >
-          <span className="font-medium text-amber-200/90">{t.dragFromBank}</span>
-          <span className="text-slate-500"> — {t.dragFromBankHint}</span>
+          <span className="text-base font-semibold text-amber-100 sm:text-lg">{t.dragFromBank}</span>
+          <span className="max-w-[20rem] text-xs leading-snug text-slate-400 sm:text-sm">{t.dragFromBankHint}</span>
         </motion.div>
       </div>
     </motion.header>

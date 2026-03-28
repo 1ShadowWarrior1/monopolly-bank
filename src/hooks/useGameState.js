@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'monopoly-bank-state-v2'
-/** Старый формат (центы); при сохранении удаляем */
 const LEGACY_STORAGE_KEY = 'monopoly-bank-state-v1'
+const MAX_PLAYERS = 8
+const STARTING_BALANCE = 15_000
 
-const DEFAULT_PLAYERS = () =>
-  Array.from({ length: 6 }, (_, i) => ({
-    id: `p${i + 1}`,
-    name: `Игрок ${i + 1}`,
-    balance: 15_000,
-    nfcSerial: '',
-  }))
+function newPlayerId() {
+  try {
+    const id = globalThis.crypto?.randomUUID?.()
+    if (id) return `p-${id}`
+  } catch {
+    /* ignore */
+  }
+  return `p-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
 
 function normalizePlayer(p) {
   let balance = 0
@@ -31,10 +34,11 @@ function normalizeBankPool(s) {
 }
 
 function normalizeState(s) {
+  const players = Array.isArray(s.players) ? s.players.map(normalizePlayer) : []
   return {
     bankMode: s.bankMode === 'finite' ? 'finite' : 'infinite',
     bankPool: normalizeBankPool(s),
-    players: s.players.map(normalizePlayer),
+    players,
   }
 }
 
@@ -44,7 +48,7 @@ function loadState() {
       localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    if (!parsed?.players?.length) return null
+    if (!parsed || !Array.isArray(parsed.players)) return null
     return normalizeState(parsed)
   } catch {
     return null
@@ -101,7 +105,7 @@ export function useGameState() {
       normalizeState({
         bankMode: 'infinite',
         bankPool: 500_000,
-        players: DEFAULT_PLAYERS(),
+        players: [],
       }),
   )
 
@@ -118,15 +122,37 @@ export function useGameState() {
     setState((s) => ({ ...s, bankMode: mode }))
   }, [])
 
-  const bindNfc = useCallback((playerId, serial) => {
-    setState((s) => ({
-      ...s,
-      players: s.players.map((p) =>
-        p.id === playerId
-          ? { ...p, nfcSerial: serial }
-          : { ...p, nfcSerial: p.nfcSerial === serial ? '' : p.nfcSerial },
-      ),
-    }))
+  /** NFC только при создании: серийник снимается один раз в форме добавления. */
+  const addPlayer = useCallback((name, nfcSerial = '') => {
+    const trimmed = String(name || '').trim()
+    if (!trimmed) return { ok: false, reason: 'empty_name' }
+
+    let out = { ok: false, reason: 'unknown' }
+    setState((s) => {
+      if (s.players.length >= MAX_PLAYERS) {
+        out = { ok: false, reason: 'limit' }
+        return s
+      }
+      const serial = String(nfcSerial || '').trim()
+      const id = newPlayerId()
+      const cleared = s.players.map((p) =>
+        serial && p.nfcSerial === serial ? { ...p, nfcSerial: '' } : p,
+      )
+      out = { ok: true }
+      return {
+        ...s,
+        players: [
+          ...cleared,
+          {
+            id,
+            name: trimmed,
+            balance: STARTING_BALANCE,
+            nfcSerial: serial,
+          },
+        ],
+      }
+    })
+    return out
   }, [])
 
   const applyTransaction = useCallback((tx, amount) => {
@@ -147,7 +173,7 @@ export function useGameState() {
   const resetPlayers = useCallback(() => {
     setState((s) => ({
       ...s,
-      players: DEFAULT_PLAYERS(),
+      players: s.players.map((p) => ({ ...p, balance: STARTING_BALANCE })),
     }))
   }, [])
 
@@ -155,9 +181,11 @@ export function useGameState() {
     state,
     setState,
     setBankMode,
-    bindNfc,
+    addPlayer,
     applyTransaction,
     canApplyTransaction,
     resetPlayers,
+    maxPlayers: MAX_PLAYERS,
+    startingBalance: STARTING_BALANCE,
   }
 }
