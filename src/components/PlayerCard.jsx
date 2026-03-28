@@ -38,7 +38,7 @@ export function PlayerCard({
           {player.name}
         </p>
         <p className="mt-1 text-center text-sm font-semibold tabular-nums text-white sm:text-base">
-          {formatMoney(player.balanceCents)}
+          {formatMoney(player.balance)}
         </p>
         <p className="mt-1 text-center text-[10px] text-slate-500">{t.dragPlayerHint}</p>
       </div>

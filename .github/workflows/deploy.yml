@@ -32,6 +32,15 @@ jobs:
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
 
+      - name: Verify Vite output (not raw dev index.html)
+        run: |
+          test -f dist/index.html
+          if grep -q '/src/main.jsx' dist/index.html; then
+            echo "ОШИБКА: в dist попал не собранный index.html. Проверьте npm run build локально."
+            exit 1
+          fi
+          echo "OK: точка входа заменена на бандл из dist/assets/"
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

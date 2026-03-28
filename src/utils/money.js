@@ -1,17 +1,14 @@
-/** @param {number} cents */
-export function formatMoney(cents) {
-  const neg = cents < 0
-  const v = Math.abs(cents)
-  const amount = v / 100
-  const s = new Intl.NumberFormat('ru-RU', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount)
+/** Формат: целые «доллары» Монополии, без копеек. @param {number} amount */
+export function formatMoney(amount) {
+  const neg = amount < 0
+  const v = Math.abs(Math.trunc(amount))
+  const s = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(v)
   return neg ? `−$${s}` : `$${s}`
 }
 
-/** Parse keypad string (cents as integer digits) */
-export function keypadToCents(keypadDigits) {
+/** Ввод с клавиатуры — только целое число (строка цифр → int). */
+export function keypadToAmount(keypadDigits) {
   if (!keypadDigits) return 0
-  return parseInt(keypadDigits, 10)
+  const n = parseInt(keypadDigits, 10)
+  return Number.isFinite(n) ? n : 0
 }

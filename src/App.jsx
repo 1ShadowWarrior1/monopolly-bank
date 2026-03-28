@@ -9,7 +9,7 @@ import { useDragSession } from './hooks/useDragSession'
 import { useGameState } from './hooks/useGameState'
 import { useNFC, vibrate } from './hooks/useNFC'
 import { t } from './i18n/ru'
-import { formatMoney, keypadToCents } from './utils/money'
+import { formatMoney, keypadToAmount } from './utils/money'
 
 function playerName(players, id) {
   return players.find((p) => p.id === id)?.name ?? 'Игрок'
@@ -180,7 +180,7 @@ export default function App() {
       startDrag(e, {
         source: { type: 'player', playerId: p.id },
         label: p.name,
-        sub: formatMoney(p.balanceCents),
+        sub: formatMoney(p.balance),
       })
     },
     [startDrag],
@@ -190,12 +190,12 @@ export default function App() {
     setBankMode(state.bankMode === 'infinite' ? 'finite' : 'infinite')
   }, [setBankMode, state.bankMode])
 
-  const centsPreview = useMemo(() => keypadToCents(digits), [digits])
+  const amountPreview = useMemo(() => keypadToAmount(digits), [digits])
 
   const confirmDisabledReason = useMemo(() => {
     if (!pendingMeta?.tx || !digits) return true
-    return !canApplyTransaction(pendingMeta.tx, centsPreview)
-  }, [pendingMeta, digits, canApplyTransaction, centsPreview])
+    return !canApplyTransaction(pendingMeta.tx, amountPreview)
+  }, [pendingMeta, digits, canApplyTransaction, amountPreview])
 
   const bindPlayerNfc = async (playerId) => {
     setIsBindingNfc(true)
@@ -213,7 +213,7 @@ export default function App() {
     <div className="flex min-h-[100dvh] flex-col bg-slate-950">
       <BankHeader
         bankMode={state.bankMode}
-        bankPoolCents={state.bankPoolCents}
+        bankPool={state.bankPool}
         onToggleMode={toggleBankMode}
         isDraggingBank={session?.source?.type === 'bank'}
         hoverValidBank={
@@ -314,9 +314,9 @@ export default function App() {
           setDigits('')
           setNfcHint('')
         }}
-        onConfirm={(cents) => {
+        onConfirm={(amount) => {
           if (!pendingMeta?.tx) return
-          const r = applyTransaction(pendingMeta.tx, cents)
+          const r = applyTransaction(pendingMeta.tx, amount)
           if (!r.ok) vibrate([80])
           else vibrate([40])
           setKeypadOpen(false)

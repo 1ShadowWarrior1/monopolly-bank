@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { formatMoney, keypadToCents } from '../utils/money'
+import { formatMoney, keypadToAmount } from '../utils/money'
 import { t } from '../i18n/ru'
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'С', '0', '⌫']
@@ -15,7 +15,7 @@ export function KeypadDialog({
   canConfirm,
   nfcActivePlayerName,
 }) {
-  const cents = keypadToCents(digits)
+  const amount = keypadToAmount(digits)
 
   const append = (k) => {
     if (k === 'С') {
@@ -62,7 +62,7 @@ export function KeypadDialog({
             <div className="px-4 pt-4">
               <div className="rounded-2xl bg-slate-950/80 px-4 py-4 text-center ring-1 ring-slate-800">
                 <p className="text-3xl font-semibold tabular-nums tracking-tight text-white sm:text-4xl">
-                  {formatMoney(cents)}
+                  {formatMoney(amount)}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">{t.keypadAmountHint}</p>
               </div>
@@ -104,7 +104,7 @@ export function KeypadDialog({
                     ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white ring-emerald-400/40'
                     : 'cursor-not-allowed bg-slate-800 text-slate-500 ring-slate-700'
                 }`}
-                onClick={() => onConfirm(cents)}
+                onClick={() => onConfirm(amount)}
               >
                 {t.confirm}
               </motion.button>

@@ -1,19 +1,15 @@
 import { motion } from 'framer-motion'
+import { formatMoney } from '../utils/money'
 import { t } from '../i18n/ru'
 
 export function BankHeader({
   bankMode,
-  bankPoolCents,
+  bankPool,
   onToggleMode,
   isDraggingBank,
   hoverValidBank,
   onBankPointerDown,
 }) {
-  const poolLabel =
-    bankMode === 'infinite'
-      ? t.infiniteLiquidity
-      : `${t.poolLabel}: ${new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bankPoolCents / 100)}`
-
   return (
     <motion.header
       data-drop-zone="bank"
@@ -39,7 +35,9 @@ export function BankHeader({
             {bankMode === 'infinite' ? `∞ ${t.infiniteMode}` : t.finiteMode}
           </motion.button>
         </div>
-        <p className="text-sm text-emerald-300/90">{poolLabel}</p>
+        <p className="text-sm text-emerald-300/90">
+          {bankMode === 'infinite' ? t.infiniteLiquidity : `${t.poolLabel}: ${formatMoney(bankPool)}`}
+        </p>
 
         <motion.div
           onPointerDown={onBankPointerDown}

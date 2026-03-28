@@ -21,7 +21,7 @@ export const t = {
   bank: 'Банк',
   cancel: 'Отмена',
   confirm: 'Готово',
-  keypadAmountHint: 'Сумма в целых центах (без запятых)',
+  keypadAmountHint: 'Целая сумма в $ (без копеек)',
   nfcCardHint: (name) => `NFC: ${name}`,
   subtitleBankTo: (name) => `Банк → ${name}`,
   subtitleToBank: (name) => `${name} → банк`,
