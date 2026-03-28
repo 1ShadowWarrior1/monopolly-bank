@@ -70,11 +70,13 @@ export function SettingsDialog({
   const [newPlayerName, setNewPlayerName] = useState('')
   const [isScanning, setIsScanning] = useState(false)
   const [scannedSerial, setScannedSerial] = useState('')
+  const [addError, setAddError] = useState('')
 
   const handleOpen = () => {
     setTempBalance(startingBalance)
     setNewPlayerName('')
     setScannedSerial('')
+    setAddError('')
     setActiveSection('players')
   }
 
@@ -89,6 +91,11 @@ export function SettingsDialog({
     if (result.ok) {
       setNewPlayerName('')
       setScannedSerial('')
+      setAddError('')
+    } else if (result.reason === 'nfc_duplicate') {
+      setAddError(`NFC-карта уже привязана к игроку "${result.playerName}"`)
+    } else if (result.reason === 'limit') {
+      setAddError('Достигнуто максимальное количество игроков')
     }
   }
 
@@ -166,7 +173,10 @@ export function SettingsDialog({
                       <input
                         type="text"
                         value={newPlayerName}
-                        onChange={(e) => setNewPlayerName(e.target.value)}
+                        onChange={(e) => {
+                          setNewPlayerName(e.target.value)
+                          setAddError('')
+                        }}
                         placeholder={t.addPlayerNamePh}
                         className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-white outline-none ring-0 placeholder:text-slate-600 focus:border-amber-500/50"
                       />
@@ -174,7 +184,10 @@ export function SettingsDialog({
                         <motion.button
                           type="button"
                           whileTap={{ scale: 0.98 }}
-                          onClick={handleScanNfc}
+                          onClick={() => {
+                            setAddError('')
+                            handleScanNfc()
+                          }}
                           disabled={scanBusy || isScanning}
                           className={`w-full rounded-xl py-2.5 text-sm font-medium ring-1 ${
                             scannedSerial
@@ -184,6 +197,9 @@ export function SettingsDialog({
                         >
                           {scannedSerial ? t.nfcLinkedBadge : t.scanNfcForNewPlayer}
                         </motion.button>
+                      )}
+                      {addError && (
+                        <p className="text-xs text-red-400">{addError}</p>
                       )}
                       <motion.button
                         type="button"

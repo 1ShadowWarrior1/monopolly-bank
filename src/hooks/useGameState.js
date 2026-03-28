@@ -159,15 +159,20 @@ export function useGameState() {
         return s
       }
       const serial = String(nfcSerial || '').trim()
+      // Проверка: если карта уже привязана к другому игроку - отказ
+      if (serial) {
+        const existingPlayer = s.players.find((p) => p.nfcSerial === serial)
+        if (existingPlayer) {
+          out = { ok: false, reason: 'nfc_duplicate', playerName: existingPlayer.name }
+          return s
+        }
+      }
       const id = newPlayerId()
-      const cleared = s.players.map((p) =>
-        serial && p.nfcSerial === serial ? { ...p, nfcSerial: '' } : p,
-      )
       out = { ok: true }
       return {
         ...s,
         players: [
-          ...cleared,
+          ...s.players,
           {
             id,
             name: trimmed,
