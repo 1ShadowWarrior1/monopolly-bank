@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { AddPlayerDialog } from './components/AddPlayerDialog'
 import { BankHeader } from './components/BankHeader'
 import { DragGhost } from './components/DragGhost'
 import { KeypadDialog } from './components/KeypadDialog'
@@ -25,6 +24,7 @@ export default function App() {
     canApplyTransaction,
     resetPlayers,
     removePlayer,
+    clearHistory,
     maxPlayers,
     setStartingBalance,
   } = useGameState()
@@ -36,15 +36,11 @@ export default function App() {
   const [pendingMeta, setPendingMeta] = useState(null)
   const [quickTransferOpen, setQuickTransferOpen] = useState(false)
   const [quickFrom, setQuickFrom] = useState(null)
-  const [isBindingNfc, setIsBindingNfc] = useState(false)
-  const [addPlayerOpen, setAddPlayerOpen] = useState(false)
-  const [addPlayerDialogKey, setAddPlayerDialogKey] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const pendingRef = useRef(null)
   const keypadOpenRef = useRef(false)
   const quickOpenRef = useRef(false)
-  const addPlayerOpenRef = useRef(false)
   const playersRef = useRef(state.players)
 
   useEffect(() => {
@@ -52,7 +48,6 @@ export default function App() {
   }, [pendingMeta])
   keypadOpenRef.current = keypadOpen
   quickOpenRef.current = quickTransferOpen
-  addPlayerOpenRef.current = addPlayerOpen
   playersRef.current = state.players
 
   const validateHover = useCallback((source, zone) => {
@@ -122,7 +117,6 @@ export default function App() {
 
   useEffect(() => {
     if (!nfcSupported) return
-    if (isBindingNfc) return
 
     return watchSerial((serial) => {
       const players = playersRef.current
@@ -132,7 +126,7 @@ export default function App() {
         return
       }
 
-      if (quickOpenRef.current || addPlayerOpenRef.current) return
+      if (quickOpenRef.current) return
 
       if (keypadOpenRef.current) {
         const meta = pendingRef.current
@@ -212,39 +206,6 @@ export default function App() {
     return !canApplyTransaction(pendingMeta.tx, amountPreview)
   }, [pendingMeta, digits, canApplyTransaction, amountPreview])
 
-  const scanNfcForNewPlayer = useCallback(async () => {
-    setIsBindingNfc(true)
-    try {
-      return await readTagOnce()
-    } catch {
-      vibrate([80])
-      return null
-    } finally {
-      setIsBindingNfc(false)
-    }
-  }, [readTagOnce])
-
-  const handleAddPlayerSubmit = useCallback(
-    (name, nfcSerial) => {
-      const r = addPlayer(name, nfcSerial)
-      if (!r.ok) {
-        if (r.reason === 'limit') vibrate([80])
-        if (r.reason === 'empty_name') vibrate([80])
-      } else {
-        vibrate([40])
-      }
-      return r
-    },
-    [addPlayer],
-  )
-
-  const atPlayerLimit = state.players.length >= maxPlayers
-
-  const openAddPlayerDialog = () => {
-    setAddPlayerDialogKey((k) => k + 1)
-    setAddPlayerOpen(true)
-  }
-
   return (
     <div className="flex min-h-[100dvh] flex-col bg-slate-950">
       <BankHeader
@@ -266,15 +227,10 @@ export default function App() {
             <motion.button
               type="button"
               whileTap={{ scale: 0.98 }}
-              disabled={atPlayerLimit}
-              onClick={openAddPlayerDialog}
-              className={`rounded-full px-3 py-1 text-[11px] font-medium ring-1 ${
-                atPlayerLimit
-                  ? 'cursor-not-allowed bg-slate-800/50 text-slate-600 ring-slate-800'
-                  : 'bg-amber-500/15 text-amber-200 ring-amber-500/40'
-              }`}
+              onClick={openSettings}
+              className="rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/40"
             >
-              {atPlayerLimit ? t.playersLimit(maxPlayers) : `+ ${t.addPlayer}`}
+              + {t.addPlayer}
             </motion.button>
             <motion.button
               type="button"
@@ -294,9 +250,8 @@ export default function App() {
             <motion.button
               type="button"
               whileTap={{ scale: 0.98 }}
-              disabled={atPlayerLimit}
-              onClick={openAddPlayerDialog}
-              className="mt-6 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 px-8 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-900/20 disabled:opacity-40"
+              onClick={openSettings}
+              className="mt-6 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 px-8 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-900/20"
             >
               + {t.addPlayer}
             </motion.button>
@@ -333,16 +288,6 @@ export default function App() {
       </main>
 
       <DragGhost session={session} ghostMotion={ghostMotion} />
-
-      <AddPlayerDialog
-        key={addPlayerDialogKey}
-        open={addPlayerOpen}
-        onClose={() => setAddPlayerOpen(false)}
-        onSubmit={handleAddPlayerSubmit}
-        nfcSupported={nfcSupported}
-        onScanNfc={scanNfcForNewPlayer}
-        scanBusy={nfcScanning || isBindingNfc}
-      />
 
       <QuickNfcDialog
         open={quickTransferOpen}
@@ -410,11 +355,23 @@ export default function App() {
         onClose={() => setSettingsOpen(false)}
         onResetPlayers={resetPlayers}
         onRemovePlayer={removePlayer}
+        onClearHistory={clearHistory}
+        onAddPlayer={addPlayer}
         startingBalance={state.startingBalance}
         onSetStartingBalance={setStartingBalance}
         playersCount={state.players.length}
         players={state.players}
         transactions={state.transactions}
+        nfcSupported={nfcSupported}
+        onScanNfc={async () => {
+          try {
+            const result = await readTagOnce()
+            return result?.serial || null
+          } catch {
+            return null
+          }
+        }}
+        scanBusy={nfcScanning}
       />
     </div>
   )

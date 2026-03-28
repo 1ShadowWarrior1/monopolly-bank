@@ -218,6 +218,10 @@ export function useGameState() {
     setState((s) => ({ ...s, startingBalance: Math.max(0, Math.floor(balance)) }))
   }, [])
 
+  const clearHistory = useCallback(() => {
+    setState((s) => ({ ...s, transactions: [] }))
+  }, [])
+
   return {
     state,
     setState,
@@ -228,6 +232,7 @@ export function useGameState() {
     resetPlayers,
     removePlayer,
     setStartingBalance,
+    clearHistory,
     maxPlayers: MAX_PLAYERS,
     startingBalance: state.startingBalance,
   }

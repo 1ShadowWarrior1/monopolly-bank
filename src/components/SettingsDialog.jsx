@@ -3,15 +3,17 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { t } from '../i18n/ru'
 import { formatMoney } from '../utils/money'
 
+const SECTIONS = ['players', 'game', 'history']
+
 function formatTransactionTime(timestamp) {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = now - date
-  
+
   if (diff < 60000) return 'Только что'
   if (diff < 3600000) return `${Math.floor(diff / 60000)} мин. назад`
   if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч. назад`
-  
+
   return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
@@ -22,18 +24,28 @@ function TransactionItem({ tx }) {
     if (tx.kind === 'transfer') return t.transactionTransfer(tx.fromPlayerName, tx.toPlayerName, tx.amount)
     return 'Операция'
   }
-  
-  const getColor = () => {
-    if (tx.kind === 'deposit') return 'text-emerald-400'
-    if (tx.kind === 'payment') return 'text-rose-400'
-    return 'text-amber-400'
-  }
-  
+
   return (
-    <div className="flex items-center justify-between rounded-lg bg-slate-900 px-3 py-2.5">
+    <div className="flex items-center justify-between rounded-lg bg-slate-900/80 px-3 py-2.5">
       <span className="truncate text-xs text-slate-300">{getText()}</span>
       <span className="ml-2 shrink-0 text-[10px] text-slate-500">{formatTransactionTime(tx.timestamp)}</span>
     </div>
+  )
+}
+
+function SectionTab({ id, label, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all ${
+        active
+          ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+          : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+      }`}
+    >
+      {label}
+    </button>
   )
 }
 
@@ -47,17 +59,44 @@ export function SettingsDialog({
   playersCount,
   players,
   transactions,
+  onAddPlayer,
+  nfcSupported,
+  onScanNfc,
+  scanBusy,
+  onClearHistory,
 }) {
+  const [activeSection, setActiveSection] = useState('players')
   const [tempBalance, setTempBalance] = useState(startingBalance)
+  const [newPlayerName, setNewPlayerName] = useState('')
+  const [isScanning, setIsScanning] = useState(false)
+  const [scannedSerial, setScannedSerial] = useState('')
 
   const handleOpen = () => {
     setTempBalance(startingBalance)
+    setNewPlayerName('')
+    setScannedSerial('')
+    setActiveSection('players')
   }
 
   const handleSaveBalance = () => {
     const value = Math.max(0, Math.floor(Number(tempBalance) || 0))
     onSetStartingBalance(value)
-    onClose()
+  }
+
+  const handleAddPlayer = () => {
+    if (!newPlayerName.trim()) return
+    const result = onAddPlayer(newPlayerName.trim(), scannedSerial)
+    if (result.ok) {
+      setNewPlayerName('')
+      setScannedSerial('')
+    }
+  }
+
+  const handleScanNfc = async () => {
+    setIsScanning(true)
+    const serial = await onScanNfc()
+    if (serial) setScannedSerial(serial)
+    setIsScanning(false)
   }
 
   return (
@@ -85,92 +124,179 @@ export function SettingsDialog({
               <p className="text-sm font-semibold text-white">{t.settingsTitle}</p>
             </div>
 
-            <div className="space-y-3 p-4">
-              <div className="rounded-xl bg-slate-950/80 p-4 ring-1 ring-slate-800">
-                <p className="text-xs font-medium text-slate-400">{t.startingBalanceLabel}</p>
-                <p className="mt-1 text-sm text-slate-500">{t.startingBalanceHint}</p>
-                <div className="mt-3 flex items-center gap-2">
-                  <input
-                    type="number"
-                    value={tempBalance}
-                    onChange={(e) => setTempBalance(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-base text-white outline-none ring-0 placeholder:text-slate-600 focus:border-amber-500/50"
-                    min={0}
-                    step={100}
-                  />
-                </div>
-                <p className="mt-2 text-xs text-emerald-400">{formatMoney(tempBalance)}</p>
-              </div>
-
-              {playersCount > 0 ? (
-                <div className="rounded-xl bg-red-950/30 p-4 ring-1 ring-red-900/50">
-                  <p className="text-sm font-medium text-red-300">{t.resetCashSection}</p>
-                  <p className="mt-1 text-xs text-red-400/80">{t.resetCashHint}</p>
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      onResetPlayers()
-                      onClose()
-                    }}
-                    className="mt-3 w-full rounded-xl bg-red-600 py-3 text-sm font-semibold text-white ring-1 ring-red-500/50"
-                  >
-                    {t.resetCash}
-                  </motion.button>
-                </div>
-              ) : null}
-
-              {playersCount > 0 ? (
-                <div className="rounded-xl bg-slate-800/50 p-4 ring-1 ring-slate-700">
-                  <p className="text-sm font-medium text-slate-300">Удаление игроков</p>
-                  <p className="mt-1 text-xs text-slate-500">Нажмите на игрока, чтобы удалить</p>
-                  <div className="mt-3 flex flex-col gap-2">
-                    {players?.map((p) => (
-                      <motion.button
-                        key={p.id}
-                        type="button"
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => onRemovePlayer(p.id)}
-                        className="flex items-center justify-between rounded-xl bg-slate-900 px-3 py-2.5 text-sm text-slate-300 ring-1 ring-slate-700 hover:bg-red-900/30 hover:text-red-300 hover:border-red-800"
-                      >
-                        <span className="truncate">{p.name}</span>
-                        <span className="ml-2 text-xs text-slate-500">{formatMoney(p.balance)}</span>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="rounded-xl bg-slate-800/50 p-4 ring-1 ring-slate-700">
-                <p className="text-sm font-medium text-slate-300">{t.transactionHistory}</p>
-                <div className="mt-3 flex max-h-48 flex-col gap-2 overflow-y-auto">
-                  {transactions && transactions.length > 0 ? (
-                    transactions.map((tx) => (
-                      <TransactionItem key={tx.id} tx={tx} />
-                    ))
-                  ) : (
-                    <p className="text-center text-xs text-slate-500">{t.noTransactions}</p>
-                  )}
-                </div>
-              </div>
+            <div className="flex gap-2 border-b border-slate-800 px-4 py-3">
+              <SectionTab
+                id="players"
+                label={t.sectionPlayers}
+                active={activeSection === 'players'}
+                onClick={() => setActiveSection('players')}
+              />
+              <SectionTab
+                id="game"
+                label={t.sectionGame}
+                active={activeSection === 'game'}
+                onClick={() => setActiveSection('game')}
+              />
+              <SectionTab
+                id="history"
+                label={t.transactionHistory}
+                active={activeSection === 'history'}
+                onClick={() => setActiveSection('history')}
+              />
             </div>
 
-            <div className="flex gap-2 border-t border-slate-800 px-4 pb-4 pt-2">
+            <div className="max-h-[60dvh] overflow-y-auto p-4">
+              {activeSection === 'players' && (
+                <div className="space-y-4">
+                  <div className="rounded-xl bg-gradient-to-br from-amber-600/20 to-amber-500/10 p-4 ring-1 ring-amber-500/30">
+                    <p className="text-sm font-semibold text-amber-200">{t.addPlayerSection}</p>
+                    <p className="mt-1 text-xs text-amber-200/70">{t.addPlayerSectionHint}</p>
+                    <div className="mt-3 space-y-2">
+                      <input
+                        type="text"
+                        value={newPlayerName}
+                        onChange={(e) => setNewPlayerName(e.target.value)}
+                        placeholder={t.addPlayerNamePh}
+                        className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-white outline-none ring-0 placeholder:text-slate-600 focus:border-amber-500/50"
+                      />
+                      {nfcSupported && (
+                        <motion.button
+                          type="button"
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleScanNfc}
+                          disabled={scanBusy || isScanning}
+                          className={`w-full rounded-xl py-2.5 text-sm font-medium ring-1 ${
+                            scannedSerial
+                              ? 'bg-emerald-500/20 text-emerald-300 ring-emerald-500/40'
+                              : 'bg-slate-800 text-slate-300 ring-slate-700'
+                          }`}
+                        >
+                          {scannedSerial ? t.nfcLinkedBadge : t.scanNfcForNewPlayer}
+                        </motion.button>
+                      )}
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleAddPlayer}
+                        disabled={!newPlayerName.trim()}
+                        className="w-full rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                      >
+                        + {t.addPlayerSubmit}
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {playersCount > 0 && (
+                    <div className="rounded-xl bg-slate-800/50 p-4 ring-1 ring-slate-700">
+                      <p className="text-sm font-semibold text-slate-300">{t.managePlayers}</p>
+                      <p className="mt-1 text-xs text-slate-500">{t.managePlayersHint}</p>
+                      <div className="mt-3 flex flex-col gap-2">
+                        {players?.map((p) => (
+                          <motion.button
+                            key={p.id}
+                            type="button"
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => onRemovePlayer(p.id)}
+                            className="flex items-center justify-between rounded-lg bg-slate-900 px-3 py-2.5 text-sm text-slate-300 ring-1 ring-slate-700 hover:bg-red-900/30 hover:text-red-300"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="truncate">{p.name}</span>
+                              {p.nfcSerial && (
+                                <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-medium text-emerald-400">
+                                  NFC
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-slate-500">{formatMoney(p.balance)}</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeSection === 'game' && (
+                <div className="space-y-4">
+                  <div className="rounded-xl bg-slate-950/80 p-4 ring-1 ring-slate-800">
+                    <p className="text-sm font-semibold text-slate-300">{t.startingBalanceLabel}</p>
+                    <p className="mt-1 text-xs text-slate-500">{t.startingBalanceHint}</p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={tempBalance}
+                        onChange={(e) => setTempBalance(e.target.value)}
+                        className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-base text-white outline-none ring-0 placeholder:text-slate-600 focus:border-amber-500/50"
+                        min={0}
+                        step={100}
+                      />
+                    </div>
+                    <p className="mt-2 text-sm font-semibold text-emerald-400">{formatMoney(tempBalance)}</p>
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleSaveBalance}
+                      className="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 py-2.5 text-sm font-semibold text-white"
+                    >
+                      {t.confirm}
+                    </motion.button>
+                  </div>
+
+                  {playersCount > 0 && (
+                    <div className="rounded-xl bg-red-950/30 p-4 ring-1 ring-red-900/50">
+                      <p className="text-sm font-semibold text-red-300">{t.resetBalances}</p>
+                      <p className="mt-1 text-xs text-red-400/80">{t.resetBalancesHint}</p>
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          onResetPlayers()
+                        }}
+                        className="mt-3 w-full rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white ring-1 ring-red-500/50"
+                      >
+                        {t.resetCash}
+                      </motion.button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeSection === 'history' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-300">{t.transactionHistory}</p>
+                    {transactions && transactions.length > 0 && (
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.98 }}
+                        onClick={onClearHistory}
+                        className="text-xs text-rose-400 hover:text-rose-300"
+                      >
+                        {t.clearHistory}
+                      </motion.button>
+                    )}
+                  </div>
+                  <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+                    {transactions && transactions.length > 0 ? (
+                      transactions.map((tx) => (
+                        <TransactionItem key={tx.id} tx={tx} />
+                      ))
+                    ) : (
+                      <p className="text-center text-xs text-slate-500">{t.noTransactions}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-slate-800 px-4 py-3">
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.98 }}
-                className="h-12 flex-1 rounded-2xl bg-slate-800 text-sm font-medium text-slate-200 ring-1 ring-slate-700"
                 onClick={onClose}
+                className="w-full rounded-2xl bg-slate-800 py-3 text-sm font-medium text-slate-200 ring-1 ring-slate-700"
               >
                 {t.cancel}
-              </motion.button>
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSaveBalance}
-                className="h-12 flex-1 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 text-sm font-semibold text-white ring-1 ring-amber-400/40"
-              >
-                {t.confirm}
               </motion.button>
             </div>
           </motion.div>
