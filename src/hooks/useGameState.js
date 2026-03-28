@@ -152,23 +152,26 @@ export function useGameState() {
     const trimmed = String(name || '').trim()
     if (!trimmed) return { ok: false, reason: 'empty_name' }
 
-    let out = { ok: false, reason: 'unknown' }
+    const serial = String(nfcSerial || '').trim()
+    
+    // Проверка на дубликат NFC до обновления состояния
+    let duplicatePlayerName = null
+    let isLimitReached = false
+    
     setState((s) => {
       if (s.players.length >= MAX_PLAYERS) {
-        out = { ok: false, reason: 'limit' }
+        isLimitReached = true
         return s
       }
-      const serial = String(nfcSerial || '').trim()
-      // Проверка: если карта уже привязана к другому игроку - отказ
       if (serial) {
         const existingPlayer = s.players.find((p) => p.nfcSerial === serial)
         if (existingPlayer) {
-          out = { ok: false, reason: 'nfc_duplicate', playerName: existingPlayer.name }
+          duplicatePlayerName = existingPlayer.name
           return s
         }
       }
+      
       const id = newPlayerId()
-      out = { ok: true }
       return {
         ...s,
         players: [
@@ -182,7 +185,15 @@ export function useGameState() {
         ],
       }
     })
-    return out
+    
+    // Возвращаем результат после обновления состояния
+    if (isLimitReached) {
+      return { ok: false, reason: 'limit' }
+    }
+    if (duplicatePlayerName) {
+      return { ok: false, reason: 'nfc_duplicate', playerName: duplicatePlayerName }
+    }
+    return { ok: true }
   }, [])
 
   const applyTransaction = useCallback((tx, amount) => {

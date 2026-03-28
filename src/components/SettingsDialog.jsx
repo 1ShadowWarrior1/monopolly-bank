@@ -95,6 +95,8 @@ export function SettingsDialog({
       setAddError(`NFC-карта уже привязана к игроку "${result.playerName}"`)
     } else if (result.reason === 'limit') {
       setAddError('Достигнуто максимальное количество игроков')
+    } else if (result.reason === 'empty_name') {
+      setAddError('Введите имя игрока')
     }
   }
 
