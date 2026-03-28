@@ -162,7 +162,7 @@ export default function App() {
       setQuickFrom(p)
       setQuickTransferOpen(true)
     })
-  }, [nfcSupported, isBindingNfc, watchSerial])
+  }, [nfcSupported, watchSerial])
 
   const openKeypadFromQuick = useCallback((tx, title, subtitle) => {
     setPendingMeta({ tx, title, subtitle })
