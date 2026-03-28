@@ -37,10 +37,12 @@ export default function App() {
   const [quickTransferOpen, setQuickTransferOpen] = useState(false)
   const [quickFrom, setQuickFrom] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [nfcEnabled, setNfcEnabled] = useState(false)
 
   const pendingRef = useRef(null)
   const keypadOpenRef = useRef(false)
   const quickOpenRef = useRef(false)
+  const settingsOpenRef = useRef(false)
   const playersRef = useRef(state.players)
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function App() {
   }, [pendingMeta])
   keypadOpenRef.current = keypadOpen
   quickOpenRef.current = quickTransferOpen
+  settingsOpenRef.current = settingsOpen
   playersRef.current = state.players
 
   const validateHover = useCallback((source, zone) => {
@@ -117,6 +120,7 @@ export default function App() {
 
   useEffect(() => {
     if (!nfcSupported) return
+    if (settingsOpenRef.current) return
 
     return watchSerial((serial) => {
       const players = playersRef.current
@@ -221,26 +225,15 @@ export default function App() {
       />
 
       <main className="mx-auto w-full max-w-lg flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{t.players}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.98 }}
-              onClick={openSettings}
-              className="rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/40"
-            >
-              + {t.addPlayer}
-            </motion.button>
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.98 }}
-              onClick={openSettings}
-              className="rounded-full bg-slate-800 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-slate-700"
-            >
-              ⚙ {t.settings}
-            </motion.button>
-          </div>
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-2 px-1">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.98 }}
+            onClick={openSettings}
+            className="rounded-full bg-slate-800 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-slate-700"
+          >
+            ⚙ {t.settings}
+          </motion.button>
         </div>
 
         {state.players.length === 0 ? (
