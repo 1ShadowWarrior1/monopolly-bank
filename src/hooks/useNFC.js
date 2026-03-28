@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-export function vibrate(ms = 40) {
+/** @param {number | number[]} [pattern] */
+export function vibrate(pattern = [40]) {
   try {
-    navigator.vibrate?.(ms)
+    const p = typeof pattern === 'number' ? [pattern] : pattern
+    navigator.vibrate?.(p)
   } catch {
     /* no-op */
   }
@@ -48,7 +50,7 @@ export function useNFC() {
           reader.removeEventListener('readingerror', onErr)
         }
         const onRead = (ev) => {
-          vibrate(40)
+          vibrate([40])
           cleanup()
           resolve(String(ev.serialNumber ?? ''))
         }
@@ -80,7 +82,7 @@ export function useNFC() {
       reader.scan({ signal: ac.signal }).catch(() => {})
 
       const handler = (ev) => {
-        vibrate(40)
+        vibrate([40])
         onSerial(String(ev.serialNumber ?? ''))
       }
       reader.addEventListener('reading', handler)

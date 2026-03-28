@@ -45,7 +45,7 @@ export default function App() {
     (source, zone) => {
       const hint = validateHover(source, zone)
       if (!hint.valid || !zone) {
-        vibrate(80)
+        vibrate([80])
         return
       }
 
@@ -72,7 +72,7 @@ export default function App() {
       }
 
       if (!tx) {
-        vibrate(80)
+        vibrate([80])
         return
       }
 
@@ -158,7 +158,7 @@ export default function App() {
       const serial = await readTagOnce()
       bindNfc(playerId, serial)
     } catch {
-      vibrate(80)
+      vibrate([80])
     }
   }
 
@@ -245,8 +245,8 @@ export default function App() {
         onConfirm={(cents) => {
           if (!pendingMeta?.tx) return
           const r = applyTransaction(pendingMeta.tx, cents)
-          if (!r.ok) vibrate(80)
-          else vibrate(40)
+          if (!r.ok) vibrate([80])
+          else vibrate([40])
           setKeypadOpen(false)
           setPendingMeta(null)
           setDigits('')

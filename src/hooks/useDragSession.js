@@ -43,7 +43,7 @@ export function useDragSession({ onCommit, validateHover }) {
       const offsetY = event.clientY - rect.top
       x.set(event.clientX - offsetX)
       y.set(event.clientY - offsetY)
-      vibrate(40)
+      vibrate([40])
       setSession({
         source: payload.source,
         label: payload.label,
@@ -71,7 +71,7 @@ export function useDragSession({ onCommit, validateHover }) {
 
     const finish = (ev) => {
       const zone = resolveDropZoneFromPoint(ev.clientX, ev.clientY)
-      vibrate(40)
+      vibrate([40])
       onCommit?.(session.source, zone)
       setSession(null)
       setHoverHint(null)
