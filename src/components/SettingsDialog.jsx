@@ -194,7 +194,7 @@ export function SettingsDialog({
                               : 'bg-slate-800 text-slate-300 ring-slate-700'
                           }`}
                         >
-                          {scannedSerial ? t.nfcLinkedBadge : t.scanNfcForNewPlayer}
+                          {scannedSerial ? `NFC: ${scannedSerial}` : t.scanNfcForNewPlayer}
                         </motion.button>
                       )}
                       {addError && (
