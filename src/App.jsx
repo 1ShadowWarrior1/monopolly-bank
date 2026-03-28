@@ -37,13 +37,13 @@ export default function App() {
   const [quickTransferOpen, setQuickTransferOpen] = useState(false)
   const [quickFrom, setQuickFrom] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [nfcEnabled, setNfcEnabled] = useState(false)
 
   const pendingRef = useRef(null)
   const keypadOpenRef = useRef(false)
   const quickOpenRef = useRef(false)
   const settingsOpenRef = useRef(false)
   const playersRef = useRef(state.players)
+  const nfcHandlerRef = useRef(null)
 
   useEffect(() => {
     pendingRef.current = pendingMeta
@@ -118,19 +118,22 @@ export default function App() {
     validateHover,
   })
 
+  // NFC сканирование - запускается один раз при старте
   useEffect(() => {
     if (!nfcSupported) {
       console.log('NFC: not supported')
       return
     }
-    if (settingsOpenRef.current) {
-      console.log('NFC: settings open, skipping')
-      return
-    }
 
-    console.log('NFC: starting watch')
-    return watchSerial((serial) => {
+    const handler = (serial) => {
       console.log('NFC serial received:', serial)
+      
+      // Не обрабатываем, если открыты настройки
+      if (settingsOpenRef.current) {
+        console.log('NFC: settings open, skipping')
+        return
+      }
+      
       const players = playersRef.current
       const p = players.find((x) => x.nfcSerial && x.nfcSerial === serial)
       if (!p) {
@@ -140,11 +143,14 @@ export default function App() {
       }
 
       console.log('NFC: player found', p.name)
+      
+      // Не обрабатываем, если уже открыто быстрое меню
       if (quickOpenRef.current) {
         console.log('NFC: quick open already active')
         return
       }
 
+      // Если открыт диалог ввода суммы - обновляем получателя
       if (keypadOpenRef.current) {
         const meta = pendingRef.current
         setNfcHint(t.nfcCardHint(p.name))
@@ -179,7 +185,23 @@ export default function App() {
       vibrate([40])
       setQuickFrom(p)
       setQuickTransferOpen(true)
-    })
+    }
+
+    console.log('NFC: starting watch')
+    nfcHandlerRef.current = handler
+  }, [nfcSupported])
+
+  // Подписка на NFC - запускается один раз
+  useEffect(() => {
+    if (!nfcSupported || !nfcHandlerRef.current) return
+
+    const cleanup = watchSerial(nfcHandlerRef.current)
+    console.log('NFC: watchSerial subscribed')
+    
+    return () => {
+      console.log('NFC: watchSerial cleanup')
+      cleanup()
+    }
   }, [nfcSupported, watchSerial])
 
   const openKeypadFromQuick = useCallback((tx, title, subtitle) => {
