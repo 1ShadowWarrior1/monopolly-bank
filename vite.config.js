@@ -32,9 +32,9 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icon-192.svg'],
       manifest: {
-        name: 'Monopoly Bank',
-        short_name: 'MonoBank',
-        description: 'Monopoly banking — drag, pay, NFC',
+        name: 'Банк Монополии',
+        short_name: 'Монобанк',
+        description: 'Банк Монополии — жесты, NFC, переводы',
         theme_color: '#0f172a',
         background_color: '#020617',
         display: 'standalone',

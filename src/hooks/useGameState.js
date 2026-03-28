@@ -5,7 +5,7 @@ const STORAGE_KEY = 'monopoly-bank-state-v1'
 const DEFAULT_PLAYERS = () =>
   Array.from({ length: 6 }, (_, i) => ({
     id: `p${i + 1}`,
-    name: `Player ${i + 1}`,
+    name: `Игрок ${i + 1}`,
     balanceCents: 1_500_000,
     nfcSerial: '',
   }))

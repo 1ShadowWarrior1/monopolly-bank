@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { t } from '../i18n/ru'
 
 export function BankHeader({
   bankMode,
@@ -10,8 +11,8 @@ export function BankHeader({
 }) {
   const poolLabel =
     bankMode === 'infinite'
-      ? 'Infinite liquidity'
-      : `Pool ${(bankPoolCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      ? t.infiniteLiquidity
+      : `${t.poolLabel}: ${new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bankPoolCents / 100)}`
 
   return (
     <motion.header
@@ -26,8 +27,8 @@ export function BankHeader({
       <div className="mx-auto flex max-w-lg flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400/90">Monopoly Bank</p>
-            <p className="text-lg font-semibold text-white">Total bank capital</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400/90">{t.appBadge}</p>
+            <p className="text-lg font-semibold text-white">{t.bankCapital}</p>
           </div>
           <motion.button
             type="button"
@@ -35,7 +36,7 @@ export function BankHeader({
             onClick={onToggleMode}
             className="rounded-full bg-slate-800 px-3 py-1.5 text-xs font-medium text-amber-200 ring-1 ring-amber-500/30"
           >
-            {bankMode === 'infinite' ? '∞ Infinite' : 'Finite'}
+            {bankMode === 'infinite' ? `∞ ${t.infiniteMode}` : t.finiteMode}
           </motion.button>
         </div>
         <p className="text-sm text-emerald-300/90">{poolLabel}</p>
@@ -44,16 +45,17 @@ export function BankHeader({
           onPointerDown={onBankPointerDown}
           role="button"
           tabIndex={0}
-          className={`touch-none cursor-grab rounded-2xl px-3 py-3 text-center text-xs text-slate-300 ring-1 active:cursor-grabbing ${
+          className={`touch-none cursor-grab select-none rounded-2xl px-3 py-3 text-center text-xs text-slate-300 ring-1 active:cursor-grabbing ${
             isDraggingBank
               ? 'scale-[1.02] bg-slate-800/90 ring-amber-500/50'
               : 'bg-slate-900/60 ring-slate-800'
           }`}
+          style={{ touchAction: 'none' }}
           animate={{ scale: isDraggingBank ? 1.02 : 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 28 }}
         >
-          <span className="font-medium text-amber-200/90">Drag from here</span>
-          <span className="text-slate-500"> — bank → player (deposit)</span>
+          <span className="font-medium text-amber-200/90">{t.dragFromBank}</span>
+          <span className="text-slate-500"> — {t.dragFromBankHint}</span>
         </motion.div>
       </div>
     </motion.header>

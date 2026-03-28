@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { formatMoney, keypadToCents } from '../utils/money'
+import { t } from '../i18n/ru'
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫']
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'С', '0', '⌫']
 
 export function KeypadDialog({
   open,
@@ -17,7 +18,7 @@ export function KeypadDialog({
   const cents = keypadToCents(digits)
 
   const append = (k) => {
-    if (k === 'C') {
+    if (k === 'С') {
       onDigitsChange('')
       return
     }
@@ -53,7 +54,7 @@ export function KeypadDialog({
               {subtitle ? <p className="mt-1 text-sm text-slate-400">{subtitle}</p> : null}
               {nfcActivePlayerName ? (
                 <p className="mt-2 rounded-lg bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300">
-                  NFC: matched {nfcActivePlayerName}
+                  {t.nfcCardHint(nfcActivePlayerName)}
                 </p>
               ) : null}
             </div>
@@ -63,7 +64,7 @@ export function KeypadDialog({
                 <p className="text-3xl font-semibold tabular-nums tracking-tight text-white sm:text-4xl">
                   {formatMoney(cents)}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">Amount in whole cents (integer)</p>
+                <p className="mt-1 text-xs text-slate-500">{t.keypadAmountHint}</p>
               </div>
             </div>
 
@@ -74,7 +75,7 @@ export function KeypadDialog({
                   type="button"
                   whileTap={{ scale: 0.94 }}
                   className={`h-14 rounded-2xl text-lg font-semibold sm:h-16 sm:text-xl ${
-                    k === 'C'
+                    k === 'С'
                       ? 'bg-rose-500/15 text-rose-200 ring-1 ring-rose-500/30'
                       : 'bg-slate-800/90 text-white ring-1 ring-slate-700'
                   }`}
@@ -92,7 +93,7 @@ export function KeypadDialog({
                 className="h-12 flex-1 rounded-2xl bg-slate-800 font-medium text-slate-200 ring-1 ring-slate-700"
                 onClick={onCancel}
               >
-                Cancel
+                {t.cancel}
               </motion.button>
               <motion.button
                 type="button"
@@ -105,7 +106,7 @@ export function KeypadDialog({
                 }`}
                 onClick={() => onConfirm(cents)}
               >
-                Confirm
+                {t.confirm}
               </motion.button>
             </div>
           </motion.div>
