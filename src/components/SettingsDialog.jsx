@@ -7,14 +7,13 @@ const SECTIONS = ['players', 'game', 'history']
 
 function formatTransactionTime(timestamp) {
   const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now - date
-
-  if (diff < 60000) return 'Только что'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} мин. назад`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч. назад`
-
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return date.toLocaleDateString('ru-RU', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: '2-digit',
+    hour: '2-digit', 
+    minute: '2-digit' 
+  })
 }
 
 function TransactionItem({ tx }) {
