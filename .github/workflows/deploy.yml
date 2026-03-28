@@ -26,6 +26,7 @@ jobs:
 
       - run: npm ci
 
+      # VITE_BASE optional: vite.config also reads GITHUB_REPOSITORY (always set in Actions).
       - name: Build
         run: npm run build
         env:
