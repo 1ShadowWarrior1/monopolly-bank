@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'monopoly-bank-state-v3'
 const LEGACY_STORAGE_KEY = 'monopoly-bank-state-v2'
-const MAX_PLAYERS = 8
+const MAX_PLAYERS = 15
 const DEFAULT_STARTING_BALANCE = 1500
 
 function newPlayerId() {
