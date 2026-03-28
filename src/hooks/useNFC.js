@@ -18,6 +18,7 @@ export function useNFC() {
   const [scanning, setScanning] = useState(false)
   const [lastError, setLastError] = useState(null)
   const abortRef = useRef(null)
+  const readerRef = useRef(null)
 
   useEffect(() => {
     setSupported(typeof window !== 'undefined' && 'NDEFReader' in window)
@@ -26,6 +27,7 @@ export function useNFC() {
   const stopScan = useCallback(() => {
     abortRef.current?.abort()
     abortRef.current = null
+    readerRef.current = null
     setScanning(false)
   }, [])
 
@@ -40,6 +42,7 @@ export function useNFC() {
     const reader = new NDEFReader()
     const ac = new AbortController()
     abortRef.current = ac
+    readerRef.current = reader
     setScanning(true)
 
     try {
@@ -54,7 +57,8 @@ export function useNFC() {
           cleanup()
           resolve(String(ev.serialNumber ?? ''))
         }
-        const onErr = () => {
+        const onErr = (ev) => {
+          console.error('NFC read error:', ev)
           cleanup()
           reject(new Error('NFC read failed'))
         }
@@ -65,6 +69,7 @@ export function useNFC() {
     } finally {
       setScanning(false)
       abortRef.current = null
+      readerRef.current = null
     }
   }, [supported])
 
@@ -72,24 +77,35 @@ export function useNFC() {
   const watchSerial = useCallback(
     (onSerial, options = {}) => {
       if (!supported) return () => {}
+      
       const reader = new NDEFReader()
+      readerRef.current = reader
       const ac = new AbortController()
+      abortRef.current = ac
       const { signal: outer } = options
+      
       if (outer) {
         outer.addEventListener('abort', () => ac.abort(), { once: true })
       }
 
-      reader.scan({ signal: ac.signal }).catch(() => {})
+      reader.scan({ signal: ac.signal }).catch((err) => {
+        console.error('NFC scan error:', err)
+        setLastError(err.message)
+      })
 
       const handler = (ev) => {
+        console.log('NFC tag detected:', ev.serialNumber)
         vibrate([40])
         onSerial(String(ev.serialNumber ?? ''))
       }
+      
       reader.addEventListener('reading', handler)
 
       return () => {
         ac.abort()
         reader.removeEventListener('reading', handler)
+        readerRef.current = null
+        abortRef.current = null
       }
     },
     [supported],

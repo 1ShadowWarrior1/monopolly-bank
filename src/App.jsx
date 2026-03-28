@@ -119,18 +119,31 @@ export default function App() {
   })
 
   useEffect(() => {
-    if (!nfcSupported) return
-    if (settingsOpenRef.current) return
+    if (!nfcSupported) {
+      console.log('NFC: not supported')
+      return
+    }
+    if (settingsOpenRef.current) {
+      console.log('NFC: settings open, skipping')
+      return
+    }
 
+    console.log('NFC: starting watch')
     return watchSerial((serial) => {
+      console.log('NFC serial received:', serial)
       const players = playersRef.current
       const p = players.find((x) => x.nfcSerial && x.nfcSerial === serial)
       if (!p) {
+        console.log('NFC: player not found for serial', serial)
         vibrate([80])
         return
       }
 
-      if (quickOpenRef.current) return
+      console.log('NFC: player found', p.name)
+      if (quickOpenRef.current) {
+        console.log('NFC: quick open already active')
+        return
+      }
 
       if (keypadOpenRef.current) {
         const meta = pendingRef.current
@@ -162,6 +175,7 @@ export default function App() {
         return
       }
 
+      console.log('NFC: opening quick transfer')
       vibrate([40])
       setQuickFrom(p)
       setQuickTransferOpen(true)
