@@ -395,9 +395,9 @@ export default function App() {
         onScanNfc={async () => {
           console.log('Settings: NFC scan requested')
           try {
-            const result = await readTagOnce()
-            console.log('Settings: NFC scan result', result)
-            return result?.serial || null
+            const serial = await readTagOnce()
+            console.log('Settings: NFC scan result', serial)
+            return serial || null
           } catch (err) {
             console.error('Settings: NFC scan error', err)
             return null
