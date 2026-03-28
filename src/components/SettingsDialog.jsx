@@ -7,9 +7,11 @@ export function SettingsDialog({
   open,
   onClose,
   onResetPlayers,
+  onRemovePlayer,
   startingBalance,
   onSetStartingBalance,
   playersCount,
+  players,
 }) {
   const [tempBalance, setTempBalance] = useState(startingBalance)
 
@@ -80,6 +82,27 @@ export function SettingsDialog({
                   >
                     {t.resetCash}
                   </motion.button>
+                </div>
+              ) : null}
+
+              {playersCount > 0 ? (
+                <div className="rounded-xl bg-slate-800/50 p-4 ring-1 ring-slate-700">
+                  <p className="text-sm font-medium text-slate-300">Удаление игроков</p>
+                  <p className="mt-1 text-xs text-slate-500">Нажмите на игрока, чтобы удалить</p>
+                  <div className="mt-3 flex flex-col gap-2">
+                    {players?.map((p) => (
+                      <motion.button
+                        key={p.id}
+                        type="button"
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => onRemovePlayer(p.id)}
+                        className="flex items-center justify-between rounded-xl bg-slate-900 px-3 py-2.5 text-sm text-slate-300 ring-1 ring-slate-700 hover:bg-red-900/30 hover:text-red-300 hover:border-red-800"
+                      >
+                        <span className="truncate">{p.name}</span>
+                        <span className="ml-2 text-xs text-slate-500">{formatMoney(p.balance)}</span>
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>

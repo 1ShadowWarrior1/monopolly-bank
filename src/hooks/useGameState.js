@@ -174,6 +174,13 @@ export function useGameState() {
     }))
   }, [])
 
+  const removePlayer = useCallback((playerId) => {
+    setState((s) => ({
+      ...s,
+      players: s.players.filter((p) => p.id !== playerId),
+    }))
+  }, [])
+
   const setStartingBalance = useCallback((balance) => {
     setState((s) => ({ ...s, startingBalance: Math.max(0, Math.floor(balance)) }))
   }, [])
@@ -186,6 +193,7 @@ export function useGameState() {
     applyTransaction,
     canApplyTransaction,
     resetPlayers,
+    removePlayer,
     setStartingBalance,
     maxPlayers: MAX_PLAYERS,
     startingBalance: state.startingBalance,

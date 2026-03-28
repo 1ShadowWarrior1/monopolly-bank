@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { t } from '../i18n/ru'
 
-export function QuickNfcDialog({ open, fromPlayer, players, onClose, onPickBank, onPickPlayer }) {
+export function QuickNfcDialog({ open, fromPlayer, players, onClose, onPickBank, onPickPlayer, onPickBankDeposit }) {
   if (!fromPlayer) return null
   const others = players.filter((p) => p.id !== fromPlayer.id)
 
@@ -40,6 +40,15 @@ export function QuickNfcDialog({ open, fromPlayer, players, onClose, onPickBank,
                 onClick={onPickBank}
               >
                 {t.quickToBank}
+              </motion.button>
+
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.98 }}
+                className="rounded-2xl bg-gradient-to-r from-emerald-700/80 to-emerald-600/80 py-3 text-left text-sm font-medium text-emerald-100 ring-1 ring-emerald-500/35 px-4"
+                onClick={onPickBankDeposit}
+              >
+                {t.quickFromBank}
               </motion.button>
 
               {others.map((p) => (

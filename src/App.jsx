@@ -24,6 +24,7 @@ export default function App() {
     applyTransaction,
     canApplyTransaction,
     resetPlayers,
+    removePlayer,
     maxPlayers,
     setStartingBalance,
   } = useGameState()
@@ -359,6 +360,14 @@ export default function App() {
             t.subtitleToBank(quickFrom.name),
           )
         }}
+        onPickBankDeposit={() => {
+          if (!quickFrom) return
+          openKeypadFromQuick(
+            { kind: 'deposit', toPlayerId: quickFrom.id },
+            t.deposit,
+            t.subtitleBankTo(quickFrom.name),
+          )
+        }}
         onPickPlayer={(toId) => {
           if (!quickFrom) return
           const toName = playerName(state.players, toId)
@@ -400,9 +409,11 @@ export default function App() {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onResetPlayers={resetPlayers}
+        onRemovePlayer={removePlayer}
         startingBalance={state.startingBalance}
         onSetStartingBalance={setStartingBalance}
         playersCount={state.players.length}
+        players={state.players}
       />
     </div>
   )
