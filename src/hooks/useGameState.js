@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 
-const STORAGE_KEY = 'monopoly-bank-state-v2'
-const LEGACY_STORAGE_KEY = 'monopoly-bank-state-v1'
+const STORAGE_KEY = 'monopoly-bank-state-v3'
+const LEGACY_STORAGE_KEY = 'monopoly-bank-state-v2'
 const MAX_PLAYERS = 8
-const DEFAULT_STARTING_BALANCE = 15_000
+const DEFAULT_STARTING_BALANCE = 1500
 
 function newPlayerId() {
   try {
@@ -35,14 +35,16 @@ function normalizeBankPool(s) {
 
 function normalizeState(s) {
   const players = Array.isArray(s.players) ? s.players.map(normalizePlayer) : []
-  const startingBalance = typeof s.startingBalance === 'number' 
-    ? Math.max(0, Math.floor(s.startingBalance)) 
+  const startingBalance = typeof s.startingBalance === 'number'
+    ? Math.max(0, Math.floor(s.startingBalance))
     : DEFAULT_STARTING_BALANCE
+  const transactions = Array.isArray(s.transactions) ? s.transactions : []
   return {
     bankMode: 'infinite',
     bankPool: normalizeBankPool(s),
     players,
     startingBalance,
+    transactions,
   }
 }
 
@@ -59,7 +61,7 @@ function loadState() {
   }
 }
 
-/** @returns {{ ok: boolean, state?: object, reason?: string }} */
+/** @returns {{ ok: boolean, state?: object, reason?: string, transaction?: object }} */
 function tryApplyTransaction(s, tx, amount) {
   const amt = Math.floor(Number(amount) || 0)
   if (amt <= 0) return { ok: false, reason: 'Amount must be positive' }
@@ -70,7 +72,15 @@ function tryApplyTransaction(s, tx, amount) {
     const to = find(tx.toPlayerId)
     if (!to) return { ok: false, reason: 'Player not found' }
     to.balance += amt
-    return { ok: true, state: next }
+    const transaction = {
+      id: crypto.randomUUID?.() || `tx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      kind: 'deposit',
+      amount: amt,
+      toPlayerId: tx.toPlayerId,
+      toPlayerName: to.name,
+      timestamp: Date.now(),
+    }
+    return { ok: true, state: next, transaction }
   }
 
   if (tx.kind === 'payment') {
@@ -78,7 +88,15 @@ function tryApplyTransaction(s, tx, amount) {
     if (!from) return { ok: false, reason: 'Player not found' }
     if (from.balance < amt) return { ok: false, reason: 'Insufficient balance' }
     from.balance -= amt
-    return { ok: true, state: next }
+    const transaction = {
+      id: crypto.randomUUID?.() || `tx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      kind: 'payment',
+      amount: amt,
+      fromPlayerId: tx.fromPlayerId,
+      fromPlayerName: from.name,
+      timestamp: Date.now(),
+    }
+    return { ok: true, state: next, transaction }
   }
 
   if (tx.kind === 'transfer') {
@@ -89,7 +107,17 @@ function tryApplyTransaction(s, tx, amount) {
     if (from.balance < amt) return { ok: false, reason: 'Insufficient balance' }
     from.balance -= amt
     to.balance += amt
-    return { ok: true, state: next }
+    const transaction = {
+      id: crypto.randomUUID?.() || `tx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      kind: 'transfer',
+      amount: amt,
+      fromPlayerId: tx.fromPlayerId,
+      fromPlayerName: from.name,
+      toPlayerId: tx.toPlayerId,
+      toPlayerName: to.name,
+      timestamp: Date.now(),
+    }
+    return { ok: true, state: next, transaction }
   }
 
   return { ok: false, reason: 'Unknown transaction' }
@@ -157,6 +185,11 @@ export function useGameState() {
     setState((s) => {
       const r = tryApplyTransaction(s, tx, amount)
       result = r
+      if (r.ok && r.state && r.transaction) {
+        const maxTransactions = 100
+        const newTransactions = [r.transaction, ...s.transactions].slice(0, maxTransactions)
+        return { ...r.state, transactions: newTransactions }
+      }
       return r.ok && r.state ? r.state : s
     })
     return result.ok ? { ok: true } : { ok: false, reason: result.reason }

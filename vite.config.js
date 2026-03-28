@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ['favicon.svg', 'icon-192.svg'],
       manifest: {
         name: 'Банк Монополии by 1ShadowWarrior1',
-        short_name: 'Монобанк',
+        short_name: 'Банк-Монополии',
         description: 'Банк Монополии — жесты, NFC, переводы',
         theme_color: '#0f172a',
         background_color: '#020617',

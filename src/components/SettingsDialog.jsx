@@ -3,6 +3,40 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { t } from '../i18n/ru'
 import { formatMoney } from '../utils/money'
 
+function formatTransactionTime(timestamp) {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) return 'Только что'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)} мин. назад`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч. назад`
+  
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+function TransactionItem({ tx }) {
+  const getText = () => {
+    if (tx.kind === 'deposit') return t.transactionDeposit(tx.toPlayerName, tx.amount)
+    if (tx.kind === 'payment') return t.transactionPayment(tx.fromPlayerName, tx.amount)
+    if (tx.kind === 'transfer') return t.transactionTransfer(tx.fromPlayerName, tx.toPlayerName, tx.amount)
+    return 'Операция'
+  }
+  
+  const getColor = () => {
+    if (tx.kind === 'deposit') return 'text-emerald-400'
+    if (tx.kind === 'payment') return 'text-rose-400'
+    return 'text-amber-400'
+  }
+  
+  return (
+    <div className="flex items-center justify-between rounded-lg bg-slate-900 px-3 py-2.5">
+      <span className="truncate text-xs text-slate-300">{getText()}</span>
+      <span className="ml-2 shrink-0 text-[10px] text-slate-500">{formatTransactionTime(tx.timestamp)}</span>
+    </div>
+  )
+}
+
 export function SettingsDialog({
   open,
   onClose,
@@ -12,6 +46,7 @@ export function SettingsDialog({
   onSetStartingBalance,
   playersCount,
   players,
+  transactions,
 }) {
   const [tempBalance, setTempBalance] = useState(startingBalance)
 
@@ -105,6 +140,19 @@ export function SettingsDialog({
                   </div>
                 </div>
               ) : null}
+
+              <div className="rounded-xl bg-slate-800/50 p-4 ring-1 ring-slate-700">
+                <p className="text-sm font-medium text-slate-300">{t.transactionHistory}</p>
+                <div className="mt-3 flex max-h-48 flex-col gap-2 overflow-y-auto">
+                  {transactions && transactions.length > 0 ? (
+                    transactions.map((tx) => (
+                      <TransactionItem key={tx.id} tx={tx} />
+                    ))
+                  ) : (
+                    <p className="text-center text-xs text-slate-500">{t.noTransactions}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-2 border-t border-slate-800 px-4 pb-4 pt-2">

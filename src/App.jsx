@@ -414,6 +414,7 @@ export default function App() {
         onSetStartingBalance={setStartingBalance}
         playersCount={state.players.length}
         players={state.players}
+        transactions={state.transactions}
       />
     </div>
   )

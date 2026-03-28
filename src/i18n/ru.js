@@ -48,4 +48,9 @@ export const t = {
   startingBalanceHint: 'Сумма, которую получают игроки при добавлении',
   resetCashSection: 'Опасная зона',
   resetCashHint: 'Сбросить балансы всех игроков до стартового значения',
+  transactionHistory: 'История операций',
+  transactionDeposit: (name, amount) => `Пополнение ${name}: +$${amount}`,
+  transactionPayment: (name, amount) => `Оплата ${name}: -$${amount}`,
+  transactionTransfer: (from, to, amount) => `Перевод ${from} → ${to}: $${amount}`,
+  noTransactions: 'Нет операций',
 }
