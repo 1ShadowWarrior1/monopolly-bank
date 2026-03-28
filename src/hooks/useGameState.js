@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 const STORAGE_KEY = 'monopoly-bank-state-v2'
 const LEGACY_STORAGE_KEY = 'monopoly-bank-state-v1'
 const MAX_PLAYERS = 8
-const STARTING_BALANCE = 15_000
+const DEFAULT_STARTING_BALANCE = 15_000
 
 function newPlayerId() {
   try {
@@ -35,10 +35,14 @@ function normalizeBankPool(s) {
 
 function normalizeState(s) {
   const players = Array.isArray(s.players) ? s.players.map(normalizePlayer) : []
+  const startingBalance = typeof s.startingBalance === 'number' 
+    ? Math.max(0, Math.floor(s.startingBalance)) 
+    : DEFAULT_STARTING_BALANCE
   return {
-    bankMode: s.bankMode === 'finite' ? 'finite' : 'infinite',
+    bankMode: 'infinite',
     bankPool: normalizeBankPool(s),
     players,
+    startingBalance,
   }
 }
 
@@ -61,16 +65,10 @@ function tryApplyTransaction(s, tx, amount) {
   if (amt <= 0) return { ok: false, reason: 'Amount must be positive' }
   const next = { ...s, players: s.players.map((p) => ({ ...p })) }
   const find = (id) => next.players.find((p) => p.id === id)
-  const bankOk = (take) => {
-    if (next.bankMode === 'infinite') return true
-    return next.bankPool >= take
-  }
 
   if (tx.kind === 'deposit') {
     const to = find(tx.toPlayerId)
     if (!to) return { ok: false, reason: 'Player not found' }
-    if (!bankOk(amt)) return { ok: false, reason: 'Bank pool too low' }
-    if (next.bankMode === 'finite') next.bankPool -= amt
     to.balance += amt
     return { ok: true, state: next }
   }
@@ -80,7 +78,6 @@ function tryApplyTransaction(s, tx, amount) {
     if (!from) return { ok: false, reason: 'Player not found' }
     if (from.balance < amt) return { ok: false, reason: 'Insufficient balance' }
     from.balance -= amt
-    if (next.bankMode === 'finite') next.bankPool += amt
     return { ok: true, state: next }
   }
 
@@ -146,7 +143,7 @@ export function useGameState() {
           {
             id,
             name: trimmed,
-            balance: STARTING_BALANCE,
+            balance: s.startingBalance,
             nfcSerial: serial,
           },
         ],
@@ -173,8 +170,12 @@ export function useGameState() {
   const resetPlayers = useCallback(() => {
     setState((s) => ({
       ...s,
-      players: s.players.map((p) => ({ ...p, balance: STARTING_BALANCE })),
+      players: s.players.map((p) => ({ ...p, balance: s.startingBalance })),
     }))
+  }, [])
+
+  const setStartingBalance = useCallback((balance) => {
+    setState((s) => ({ ...s, startingBalance: Math.max(0, Math.floor(balance)) }))
   }, [])
 
   return {
@@ -185,7 +186,8 @@ export function useGameState() {
     applyTransaction,
     canApplyTransaction,
     resetPlayers,
+    setStartingBalance,
     maxPlayers: MAX_PLAYERS,
-    startingBalance: STARTING_BALANCE,
+    startingBalance: state.startingBalance,
   }
 }

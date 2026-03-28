@@ -6,6 +6,7 @@ import { DragGhost } from './components/DragGhost'
 import { KeypadDialog } from './components/KeypadDialog'
 import { PlayerCard } from './components/PlayerCard'
 import { QuickNfcDialog } from './components/QuickNfcDialog'
+import { SettingsDialog } from './components/SettingsDialog'
 import { useDragSession } from './hooks/useDragSession'
 import { useGameState } from './hooks/useGameState'
 import { useNFC, vibrate } from './hooks/useNFC'
@@ -19,12 +20,12 @@ function playerName(players, id) {
 export default function App() {
   const {
     state,
-    setBankMode,
     addPlayer,
     applyTransaction,
     canApplyTransaction,
     resetPlayers,
     maxPlayers,
+    setStartingBalance,
   } = useGameState()
   const { supported: nfcSupported, scanning: nfcScanning, readTagOnce, watchSerial } = useNFC()
 
@@ -37,6 +38,7 @@ export default function App() {
   const [isBindingNfc, setIsBindingNfc] = useState(false)
   const [addPlayerOpen, setAddPlayerOpen] = useState(false)
   const [addPlayerDialogKey, setAddPlayerDialogKey] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const pendingRef = useRef(null)
   const keypadOpenRef = useRef(false)
@@ -198,9 +200,9 @@ export default function App() {
     [startDrag],
   )
 
-  const toggleBankMode = useCallback(() => {
-    setBankMode(state.bankMode === 'infinite' ? 'finite' : 'infinite')
-  }, [setBankMode, state.bankMode])
+  const openSettings = useCallback(() => {
+    setSettingsOpen(true)
+  }, [])
 
   const amountPreview = useMemo(() => keypadToAmount(digits), [digits])
 
@@ -245,9 +247,6 @@ export default function App() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-slate-950">
       <BankHeader
-        bankMode={state.bankMode}
-        bankPool={state.bankPool}
-        onToggleMode={toggleBankMode}
         isDraggingBank={session?.source?.type === 'bank'}
         hoverValidBank={
           !!(
@@ -276,16 +275,14 @@ export default function App() {
             >
               {atPlayerLimit ? t.playersLimit(maxPlayers) : `+ ${t.addPlayer}`}
             </motion.button>
-            {state.players.length > 0 ? (
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.98 }}
-                onClick={resetPlayers}
-                className="rounded-full bg-slate-800 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-slate-700"
-              >
-                {t.resetCash}
-              </motion.button>
-            ) : null}
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={openSettings}
+              className="rounded-full bg-slate-800 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-slate-700"
+            >
+              ⚙ {t.settings}
+            </motion.button>
           </div>
         </div>
 
@@ -397,6 +394,15 @@ export default function App() {
           setDigits('')
           setNfcHint('')
         }}
+      />
+
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onResetPlayers={resetPlayers}
+        startingBalance={state.startingBalance}
+        onSetStartingBalance={setStartingBalance}
+        playersCount={state.players.length}
       />
     </div>
   )
